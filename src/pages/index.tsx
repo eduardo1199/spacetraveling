@@ -1,5 +1,12 @@
+/* eslint-disable react/destructuring-assignment */
 import { GetStaticProps } from 'next';
 import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai';
+
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { useState } from 'react';
+import { parse } from 'path';
+import { PrismicDocument } from '@prismicio/types';
 import { Header } from '../components/Header';
 
 import { getPrismicClient } from '../services/prismic';
@@ -26,47 +33,76 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home(postsPagination: PostPagination): JSX.Element {
-  console.log(postsPagination);
+export default function Home(postsPagination: HomeProps): JSX.Element {
+  const [dataPagination, setDataPagination] = useState(
+    postsPagination.postsPagination.results
+  );
+  const [nextPage, setNextPage] = useState(
+    postsPagination.postsPagination.next_page
+  );
+
+  async function onNextPagePost(): Promise<void> {
+    try {
+      const getNextPagePosts = await fetch(nextPage);
+      const getNextPagePostsJson = await getNextPagePosts.json();
+
+      const post: Post = {
+        data: {
+          author: getNextPagePostsJson.results[0].data.author,
+          subtitle: getNextPagePostsJson.results[0].data.subtitle,
+          title: getNextPagePostsJson.results[0].data.title,
+        },
+        first_publication_date: format(
+          new Date(getNextPagePostsJson.results[0].first_publication_date),
+          'd MMM yyyy',
+          {
+            locale: ptBR,
+          }
+        ),
+        uid: getNextPagePostsJson.results[0].uid,
+      };
+
+      const posts: Post[] = [];
+      posts.push(post);
+
+      setDataPagination(prev => [...prev, ...posts]);
+      setNextPage(getNextPagePostsJson.next_page);
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  }
 
   return (
     <>
       <Header />
       <main className={styles.container}>
-        <div className={styles.posts}>
-          <h1>Como utilizar Hooks</h1>
-          <p>Pensando em sincronização em vez de ciclos de vida.</p>
-          <div className={styles.postsInfo}>
-            <div>
-              <AiOutlineCalendar size={20} />
-              <span>19 Abr 2021</span>
-            </div>
-            <div>
-              <AiOutlineUser size={20} />
-              <span>Danilo Vieira</span>
-            </div>
-          </div>
-        </div>
-        <div className={styles.posts}>
-          <h1>Criando um app CRA do zero</h1>
-          <p>
-            Tudo sobre como criar a sua primeira aplicação utilizando Create
-            React App.
-          </p>
-          <div className={styles.postsInfo}>
-            <div>
-              <AiOutlineCalendar size={20} />
-              <span>19 Abr 2021</span>
-            </div>
-            <div>
-              <AiOutlineUser size={20} />
-              <span>Danilo Vieira</span>
-            </div>
-          </div>
-        </div>
-        <button type="button" className={styles.button}>
-          Carregar mais posts
-        </button>
+        {dataPagination.map(post => {
+          return (
+            <a href="/" className={styles.posts} key={post.uid}>
+              <h1>{post.data.title}</h1>
+              <p>{post.data.subtitle}</p>
+              <div className={styles.postsInfo}>
+                <div>
+                  <AiOutlineCalendar size={20} />
+                  <span>{post.first_publication_date}</span>
+                </div>
+                <div>
+                  <AiOutlineUser size={20} />
+                  <span>{post.data.author}</span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+        {nextPage && (
+          <button
+            type="button"
+            className={styles.button}
+            onClick={() => onNextPagePost()}
+          >
+            Carregar mais posts
+          </button>
+        )}
       </main>
     </>
   );
@@ -86,7 +122,13 @@ export const getStaticProps: GetStaticProps = async ({ previewData }) => {
         subtitle: postsResponse.results[0].data.subtitle,
         title: postsResponse.results[0].data.title,
       },
-      first_publication_date: postsResponse.results[0].first_publication_date,
+      first_publication_date: format(
+        new Date(postsResponse.results[0].first_publication_date),
+        'd MMM yyyy',
+        {
+          locale: ptBR,
+        }
+      ),
       uid: postsResponse.results[0].uid,
     };
 
@@ -104,8 +146,6 @@ export const getStaticProps: GetStaticProps = async ({ previewData }) => {
       },
     };
   } catch (err) {
-    console.log(err);
-
     return {
       props: {},
     };
