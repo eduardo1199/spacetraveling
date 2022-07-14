@@ -5,13 +5,11 @@ import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useState } from 'react';
-import { parse } from 'path';
-import { PrismicDocument } from '@prismicio/types';
+import Link from 'next/link';
 import { Header } from '../components/Header';
 
 import { getPrismicClient } from '../services/prismic';
 
-import commonStyles from '../styles/common.module.scss';
 import styles from './home.module.scss';
 
 interface Post {
@@ -78,20 +76,22 @@ export default function Home(postsPagination: HomeProps): JSX.Element {
       <main className={styles.container}>
         {dataPagination.map(post => {
           return (
-            <a href="/" className={styles.posts} key={post.uid}>
-              <h1>{post.data.title}</h1>
-              <p>{post.data.subtitle}</p>
-              <div className={styles.postsInfo}>
-                <div>
-                  <AiOutlineCalendar size={20} />
-                  <span>{post.first_publication_date}</span>
+            <Link href={`/post/${post.uid}`} key={post.uid}>
+              <a className={styles.posts} key={post.uid}>
+                <h1>{post.data.title}</h1>
+                <p>{post.data.subtitle}</p>
+                <div className={styles.postsInfo}>
+                  <div>
+                    <AiOutlineCalendar size={20} />
+                    <span>{post.first_publication_date}</span>
+                  </div>
+                  <div>
+                    <AiOutlineUser size={20} />
+                    <span>{post.data.author}</span>
+                  </div>
                 </div>
-                <div>
-                  <AiOutlineUser size={20} />
-                  <span>{post.data.author}</span>
-                </div>
-              </div>
-            </a>
+              </a>
+            </Link>
           );
         })}
         {nextPage && (

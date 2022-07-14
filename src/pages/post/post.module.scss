@@ -1,1 +1,40 @@
-// TODO
+.banner {
+  img {
+    width: 100%;
+    max-height: 440px;
+    object-fit: cover;
+  }
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+
+  padding: 3rem;
+
+
+  h1 {
+    color: var(--Heading);
+    font-weight: 700;
+    font-size: 1.75rem;
+  }
+}
+
+.postsInfo {
+  display: flex;
+
+  gap: 1.625rem;
+
+  div {
+    display: flex;
+    gap: 1rem;
+
+    span, svg {
+      color: var(--Info);
+    }
+  }
+}
