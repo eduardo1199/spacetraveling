@@ -1,7 +1,11 @@
 import { format } from 'date-fns';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import ptBR from 'date-fns/locale/pt-BR';
-import { AiOutlineCalendar, AiOutlineUser } from 'react-icons/ai';
+import {
+  AiOutlineCalendar,
+  AiOutlineUser,
+  AiOutlineClockCircle,
+} from 'react-icons/ai';
 import { RichText } from 'prismic-dom';
 import { Header } from '../../components/Header';
 
@@ -31,6 +35,20 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps): JSX.Element {
+  const READING_AVARAGE_POST = 200;
+
+  const postReadingTime = post.data.content.reduce(
+    (acc, content) => {
+      acc.value += content.heading.split(' ').join().length;
+      acc.value += RichText.asText(content.body).split(' ').join().length;
+
+      return acc;
+    },
+    {
+      value: 0,
+    }
+  );
+
   return (
     <>
       <Header />
@@ -48,7 +66,17 @@ export default function Post({ post }: PostProps): JSX.Element {
             <AiOutlineUser size={20} />
             <span>{post.data.author}</span>
           </div>
-          <div>{RichText.asHtml(post.data.content)}</div>
+          <div>
+            <AiOutlineClockCircle size={20} />
+            <span>
+              {Math.ceil(postReadingTime.value / READING_AVARAGE_POST)} min
+            </span>
+          </div>
+          {/* <div
+            dangerouslySetInnerHTML={{
+              __html: post.data.content,
+            }}
+          /> */}
         </div>
       </main>
     </>
@@ -57,11 +85,15 @@ export default function Post({ post }: PostProps): JSX.Element {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient({});
-  // const posts = await prismic.getByType('');
+  const posts = await prismic.getByType('posts');
+
+  const paths = posts.results.map(post => ({
+    params: { slug: post.uid },
+  }));
 
   return {
-    paths: [],
-    fallback: 'blocking',
+    paths,
+    fallback: true,
   };
 };
 
